@@ -1,0 +1,342 @@
+/**
+ * 概要  :入力チェックjavascript
+ * 作成者:千葉貴裕
+ * 作成日:2013/10/10
+ * 最終更新日：yyyy/mm/dd
+ */
+
+// 二重送信防止フラグ
+var sendFlg = false;
+
+/**
+ * 処理振り分け
+ *
+ * @param screenID
+ * @returns
+ */
+function checkSubmit(screenID) {
+
+	// 二重送信防止チェック
+	if(sendFlg){
+		alert("二重送信できません！\n1度目の押下だけ有効です。");
+		return false;
+	}
+
+	var status = true;
+	var res = false;
+	var msg = "";
+
+	// 必須入力チェック
+	if(screenID != null && screenID != ""){
+
+		// 画面振り分け判定
+		if(screenID == "login"){		// ログイン画面
+
+			msg = checkLoginForm();
+			if(msg != ""){
+				alert(msg);
+				status = false;
+			}
+
+		}else if(screenID == "member"){	// 会員登録画面
+			msg = checkMenberForm();
+			if(msg != ""){
+				status = false;
+			}
+			msg = confirm();
+			if(msg != ""){
+				status = false;
+			}
+
+		}else if(screenID == "exibit"){	// 出品画面
+			msg = checkExhibitForm();
+			if(msg != ""){
+				status = false;
+			}
+			msg = confirm();
+			if(msg != ""){
+				status = false;
+			}
+			if(status){
+			    // 確認ダイアログを表示
+				status = confirm("商品の出品を行います。\n入力内容で出品してよろしいですか？");
+			}
+
+		}else if(screenID == "bid"){	// 入札画面
+			msg = checkBidForm();
+			if(msg != ""){
+				status = false;
+			}
+			msg = confirm();
+			if(msg != ""){
+				status = false;
+			}
+			if(status){
+			    // 確認ダイアログを表示
+				status = confirm("商品の入札を行います。\n入力した金額でよろしいですか？");
+			}
+
+		}else if(screenID == "resign"){	// 退会画面
+			msg = checkResignForm();
+			if(msg != ""){
+				status = false;
+			}
+			if(status){
+			    // 確認ダイアログを表示
+				status = confirm("退会処理を実行します。\n本当に退会してよろしいですか？");
+			}
+		}
+	}
+	return status;
+}
+
+/**
+ * ログイン画面 入力チェック
+ *
+ * @returns {String}
+ */
+function checkLoginForm(){
+
+	// 変数宣言
+	var msg = "";
+
+	// 画面入力値取得
+	var user = trimStr(this.document.getElementById("user").value);
+	var pass = trimStr(this.document.getElementById("pass").value);
+
+	// 画面入力項目の数だけ入力チェック
+	var aryStr = { "user<>ログイン名" : user, "pass<>パスワード":pass };
+	for (var key in aryStr) {
+
+		// キー項目分割
+		arykey = key.split("<>");
+
+		// 必須チェック
+		msg = checkRequired(aryStr[key], arykey[1]);
+		if(msg != ""){
+			break;
+		}
+	}
+	// メッセージリターン
+	return msg;
+}
+
+/**
+ * 会員登録画面 入力チェック
+ *
+ * @returns {String}
+ */
+function checkMenberForm(){
+
+	// 変数宣言
+	var msg = "";
+
+	// 画面入力値取得
+	var user = this.document.getElementById("user").value;
+	var fullname = this.document.getElementById("fullname").value;
+	var pass = this.document.getElementById("pass").value;
+
+	// 画面入力項目の数だけ入力チェック
+	var aryStr = { "user<>ログイン名" : user, "fullname<>会員氏名":fullname , "pass<>パスワード":pass };
+	for (var key in aryStr) {
+
+		// キー項目分割
+		arykey = key.split("<>");
+
+		// 必須チェック
+		if( arykey[0] != "fullname" ){
+			msg = checkRequired(aryStr[key], arykey[1]);
+			if(msg != ""){
+				break;
+			}
+		}
+		// 長さチェック
+		msg = checkByte(aryStr[key], arykey[1], 16);
+		if(msg != ""){
+			break;
+		}
+		// 半角英数字チェック
+		msg = checkRegex(aryStr[key], arykey[1]);
+		if(msg != ""){
+			break;
+		}
+	}
+	// メッセージリターン
+	return msg;
+}
+
+ /**
+  * 出品画面 入力チェック
+  *
+  * @returns {String}
+  */
+function checkExhibitForm(){
+
+	// 変数宣言
+	var msg = "";
+
+	// 画面入力値取得
+	var kind  = this.document.getElementById("kind").value;
+	var item  = trimStr(this.document.getElementById("item").value);
+	var start_price   = this.document.getElementById("start_price").value;
+	var year  = this.document.getElementById("year").value;
+	var month = this.document.getElementById("month").value;
+	var day   = this.document.getElementById("day").value;
+	var hour  = this.document.getElementById("hour").value;
+	var min   = this.document.getElementById("min").value;
+
+	/** 種類チェック  **/
+	// 長さチェック
+	msg = checkByte(kind, "種類", 16);
+	if(msg != ""){
+		// メッセージリターン
+		return msg;
+	}
+
+	/** 商品名チェック  **/
+	// 必須チェック
+	msg = checkRequired(item, "商品名");
+	if(msg != ""){
+		// メッセージリターン
+		return msg;
+	}
+
+	// 長さチェック
+	msg = checkByte(item, "商品名", 64);
+	if(msg != ""){
+		// メッセージリターン
+		return msg;
+	}
+
+	// 禁則文字チェック
+	msg = checkCtlCode(item, "商品名");
+	if(msg != ""){
+		// メッセージリターン
+		return msg;
+	}
+
+	// NULLチェック
+	msg = checkNull(item, "商品名");
+	if(msg != ""){
+		// メッセージリターン
+		return msg;
+	}
+
+	/** 開始価格チェック  **/
+	// 必須チェック
+	msg = checkRequired(start_price, "開始価格");
+	if(msg != ""){
+		// メッセージリターン
+		return msg;
+	}
+
+	// 半角数字文字チェック
+	msg = checkRegex2(start_price, "開始価格");
+	if(msg != ""){
+		// メッセージリターン
+		return msg;
+	}
+
+	// 範囲チェック（上限、下限）
+	msg = checkRange(start_price, "開始価格", 999999999, 1);
+	if(msg != ""){
+		// メッセージリターン
+		return msg;
+	}
+
+	/** 終了日時チェック  **/
+	// 閏年チェック
+	if ((month == 2) && checkYear(year)){
+		month = 13;
+	}
+
+	// 末日チェック
+	if (!checkLastDay(month, day)){
+		// エラーの場合アラート表示
+		msg = "終了日時に不正な日付が入力されています。";
+
+		// メッセージリターン
+		return msg;
+	}
+
+	// 終了時刻取得
+	var exhibitDate = new Date(year, month, day, hour, min);
+
+	// 現在時刻取得
+	var now = new Date();
+	var nowDate = new Date(now.getFullYear(), now.getMonth(), now.getDate()
+							, now.getHours(), now.getMinutes());
+
+	// 終了時刻チェック
+	if (exhibitDate.getTime() < nowDate.getTime()){
+		// エラーの場合アラート表示
+		msg = "終了日は現在日時以前では指定できません。";
+
+		// メッセージリターン
+		return msg;
+	}
+	// メッセージリターン
+	return msg;
+}
+
+/**
+ * 入札画面 入力チェック
+ *
+ * @returns {String}
+ */
+function checkBidForm(){
+
+	// 変数宣言
+	var msg = "";
+
+	// 画面入力値取得  8388607
+	var id = this.document.getElementById("id").value;
+	var price = this.document.getElementById("price").value;
+
+
+	// 画面入力項目の数だけ入力チェック
+	var aryStr = { "id<>商品ID" : id, "price<>入札金額":price };
+	for (var key in aryStr) {
+
+		// キー項目分割
+		arykey = key.split("<>");
+
+		// 必須チェック
+		msg = checkRequired(aryStr[key], arykey[1]);
+		if(msg != ""){
+			// メッセージリターン
+			return msg;
+		}
+		// 半角数字チェック
+		msg = checkRegex2(aryStr[key], arykey[1]);
+		if(msg != ""){
+			// メッセージリターン
+			return msg;
+		}
+
+		// 商品ID判定
+		if( arykey[0] == "id"){
+
+			// 範囲チェック（上限、下限）---> 商品ID
+			msg = checkRange(id, arykey[1], 8388607, 1);
+			if(msg != ""){
+				// メッセージリターン
+				return msg;
+			}
+		}
+
+		// 入札金額判定
+		if( arykey[0] == "price"){
+
+			// 範囲チェック（上限、下限）---> 入札金額
+			msg = checkRange(price, arykey[1], 999999999, 1);
+			if(msg != ""){
+				// メッセージリターン
+				return msg;
+			}
+		}
+	}
+	// メッセージリターン
+	return msg;
+}
+
